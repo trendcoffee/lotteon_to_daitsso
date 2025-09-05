@@ -120,7 +120,7 @@ def _safe_postal_code(postal_code):
 
 # ================== 변환 함수 ==================
 def convert_to_eplex(order_df: pd.DataFrame):
-    # 주문일자를 2025-09-25 형식으로 설정
+    # 주문일자를 2025-09-25 형식으로 설정 (월, 일에 0 패딩)
     today = datetime.today().strftime("%Y-%m-%d")
     rows = []
 
@@ -237,21 +237,33 @@ if ecount_file:
             c1, c2 = st.columns(2)
             
             if not daitsso_df.empty:
+                # XLSX 형식으로 다운로드
+                excel_data = BytesIO()
+                with pd.ExcelWriter(excel_data, engine='openpyxl') as writer:
+                    daitsso_df.to_excel(writer, index=False, sheet_name='Sheet1')
+                excel_data.seek(0)
+                
                 c1.download_button(
                     "다잇쏘 주문건 다운로드",
-                    data=daitsso_df.to_csv(index=False).encode("utf-8-sig"),
-                    file_name="다잇쏘주문건.csv",
-                    mime="text/csv"
+                    data=excel_data.getvalue(),
+                    file_name="다잇쏘주문건.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
             else:
                 c1.info("📋 다잇쏘 주문건이 없습니다.")
             
             if not eplex_df.empty:
+                # XLSX 형식으로 다운로드
+                excel_data = BytesIO()
+                with pd.ExcelWriter(excel_data, engine='openpyxl') as writer:
+                    eplex_df.to_excel(writer, index=False, sheet_name='Sheet1')
+                excel_data.seek(0)
+                
                 c2.download_button(
                     "이플렉스 주문건 다운로드",
-                    data=eplex_df.to_csv(index=False).encode("utf-8-sig"),
-                    file_name="이플렉스수기주문건.csv",
-                    mime="text/csv"
+                    data=excel_data.getvalue(),
+                    file_name="이플렉스수기주문건.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
             else:
                 c2.info("📋 이플렉스 주문건이 없습니다.")
@@ -292,9 +304,7 @@ with st.form("add_mapping"):
                 ws.append_row([new_number.strip(), new_name.strip()])
                 st.success(f"✅ 매핑 추가됨: {new_number.strip()} - {new_name.strip()}")
                 
-                # 캐시 갱신 (쿠팡 코드와 동일)
-                load_mapping.clear()
-                # st.rerun() 제거 - 다운로드 버튼이 사라지는 문제 해결
+                # 캐시 갱신 제거 - 다운로드 버튼이 사라지는 문제 해결
                 
             except Exception as e:
                 st.error("❌ 매핑 추가 중 오류 발생")
