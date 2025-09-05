@@ -233,42 +233,52 @@ if ecount_file:
         else:
             st.success("✅ 변환 완료!")
             
-            # 다운로드 버튼 (데이터가 있을 때만)
-            c1, c2 = st.columns(2)
+            # 세션 상태에 변환된 데이터 저장
+            st.session_state['daitsso_df'] = daitsso_df
+            st.session_state['eplex_df'] = eplex_df
+            st.session_state['conversion_completed'] = True
+
+    # 변환 완료 후 다운로드 버튼 표시 (세션 상태 사용)
+    if st.session_state.get('conversion_completed', False):
+        st.markdown("---")
+        st.subheader("📥 다운로드")
+        
+        daitsso_df = st.session_state.get('daitsso_df', pd.DataFrame())
+        eplex_df = st.session_state.get('eplex_df', pd.DataFrame())
+        
+        c1, c2 = st.columns(2)
+        
+        if not daitsso_df.empty:
+            # XLSX 형식으로 다운로드
+            excel_data = BytesIO()
+            with pd.ExcelWriter(excel_data, engine='openpyxl') as writer:
+                daitsso_df.to_excel(writer, index=False, sheet_name='Sheet1')
+            excel_data.seek(0)
             
-            if not daitsso_df.empty:
-                # XLSX 형식으로 다운로드
-                excel_data = BytesIO()
-                with pd.ExcelWriter(excel_data, engine='openpyxl') as writer:
-                    daitsso_df.to_excel(writer, index=False, sheet_name='Sheet1')
-                excel_data.seek(0)
-                
-                c1.download_button(
-                    "다잇쏘 주문건 다운로드",
-                    data=excel_data.getvalue(),
-                    file_name="다잇쏘주문건.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-            else:
-                c1.info("📋 다잇쏘 주문건이 없습니다.")
+            c1.download_button(
+                "다잇쏘 주문건 다운로드",
+                data=excel_data.getvalue(),
+                file_name="다잇쏘주문건.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            c1.info("📋 다잇쏘 주문건이 없습니다.")
+        
+        if not eplex_df.empty:
+            # XLSX 형식으로 다운로드
+            excel_data = BytesIO()
+            with pd.ExcelWriter(excel_data, engine='openpyxl') as writer:
+                eplex_df.to_excel(writer, index=False, sheet_name='Sheet1')
+            excel_data.seek(0)
             
-            if not eplex_df.empty:
-                # XLSX 형식으로 다운로드
-                excel_data = BytesIO()
-                with pd.ExcelWriter(excel_data, engine='openpyxl') as writer:
-                    eplex_df.to_excel(writer, index=False, sheet_name='Sheet1')
-                excel_data.seek(0)
-                
-                c2.download_button(
-                    "이플렉스 주문건 다운로드",
-                    data=excel_data.getvalue(),
-                    file_name="이플렉스수기주문건.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-            else:
-                c2.info("📋 이플렉스 주문건이 없습니다.")
-            
-            # 미리보기 제거 - 다운로드만 제공
+            c2.download_button(
+                "이플렉스 주문건 다운로드",
+                data=excel_data.getvalue(),
+                file_name="이플렉스수기주문건.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            c2.info("📋 이플렉스 주문건이 없습니다.")
 
 # ================== 매핑 현황 ==================
 st.markdown("---")
