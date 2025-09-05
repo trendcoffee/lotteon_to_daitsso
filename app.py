@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from openpyxl import load_workbook
-from openpyxl.styles import PatternFill
 from io import BytesIO
 import gspread
 from google.oauth2.service_account import Credentials
@@ -92,7 +90,7 @@ lotteon_map = {
 }
 
 # ================== 변환 함수 ==================
-def convert_to_eplex(order_df: pd.DataFrame, bom_df: pd.DataFrame):
+def convert_to_eplex(order_df: pd.DataFrame):
     today = datetime.today().strftime("%Y-%m-%d")
     rows = []
 
@@ -102,7 +100,6 @@ def convert_to_eplex(order_df: pd.DataFrame, bom_df: pd.DataFrame):
         쇼핑몰상품코드 = str(row.get("쇼핑몰상품코드", "")).strip()
         erp = str(row.get("품목코드(ERP)", "")).strip()
 
-        # 기본 코드 결정
         code = erp
         if 수집처 == "롯데ON":
             if 옵션 in lotteon_map:
@@ -148,25 +145,19 @@ def convert_to_eplex(order_df: pd.DataFrame, bom_df: pd.DataFrame):
 # ================== UI ==================
 st.title("롯데ON 주문건 변환기")
 ecount_file = st.file_uploader("① 이카운트 양식 업로드", type=["xlsx"])
-bom_file = st.file_uploader("② CJ이플렉스 BOM 등록리스트 업로드", type=["csv"])
 
-if ecount_file and bom_file:
-    bom_df = pd.read_csv(bom_file)
+if ecount_file:
     df = pd.read_excel(ecount_file, skiprows=1, dtype=str).fillna("")
     df = df[~df.iloc[:, 0].astype(str).str.contains("오전|오후", na=False)]  # 마지막 시간행 제거
 
-    # 다잇쏘 분리 (구글시트 상품번호 기준)
     daitsso_df = df[df["쇼핑몰상품코드"].isin(mapping_dict.keys())].copy()
     other_df = df[~df["쇼핑몰상품코드"].isin(mapping_dict.keys())].copy()
 
     if st.button("변환 실행"):
-        # 이플렉스 변환
-        eplex_df = convert_to_eplex(other_df, bom_df)
+        eplex_df = convert_to_eplex(other_df)
 
         st.success("✅ 변환 완료!")
-        st.subheader("📥 다운로드")
         c1, c2 = st.columns(2)
-
         c1.download_button(
             "다잇쏘 주문건 다운로드",
             data=daitsso_df.to_csv(index=False).encode("utf-8-sig"),
@@ -179,11 +170,7 @@ if ecount_file and bom_file:
             file_name="이플렉스수기주문건.csv",
             mime="text/csv"
         )
-
-        st.subheader("📊 미리보기")
-        st.write("👉 다잇쏘 주문건")
         st.dataframe(daitsso_df.head(10), use_container_width=True, height=250)
-        st.write("👉 이플렉스 주문건")
         st.dataframe(eplex_df.head(10), use_container_width=True, height=250)
 
 # ================== 매핑 추가 입력창 ==================
