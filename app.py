@@ -250,14 +250,7 @@ if ecount_file:
             else:
                 c2.info("📋 이플렉스 주문건이 없습니다.")
             
-            # 미리보기 (데이터가 있을 때만)
-            if not daitsso_df.empty:
-                st.subheader("📋 다잇쏘 주문건 미리보기")
-                st.dataframe(daitsso_df.head(10), use_container_width=True, height=250)
-            
-            if not eplex_df.empty:
-                st.subheader("📋 이플렉스 주문건 미리보기")
-                st.dataframe(eplex_df.head(10), use_container_width=True, height=250)
+            # 미리보기 제거 - 다운로드만 제공
 
 # ================== 매핑 현황 ==================
 st.markdown("---")
