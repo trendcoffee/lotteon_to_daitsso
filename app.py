@@ -146,7 +146,7 @@ def convert_to_eplex(order_df: pd.DataFrame):
             "* 묶음배송번호": str(row.get("주문번호", "") or ""),
             "* 품목코드": code,
             "품목명": str(row.get("품목명(ERP)", "") or ""),
-            "옵션": 옵션,
+            "옵션": "",  # 이플렉스 양식에서는 옵션 칼럼을 비움
             "가격": str(row.get("주문금액", "") or ""),
             "* 품목수량": str(row.get("수량", "") or ""),
             "주문자": str(row.get("주문자", "") or ""),
