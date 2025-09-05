@@ -96,7 +96,7 @@ st.write("불러온 매핑 데이터 (상위 5개):", dict(list(mapping_dict.ite
 uploaded = st.file_uploader("📂 롯데ON 주문건 Excel 업로드 (.xlsx)", type=["xlsx"])
 if uploaded:
     try:
-        df = pd.read_excel(uploaded, dtype=str).fillna("")
+        df = pd.read_excel(uploaded, dtype=str, header=1).fillna("")
 
         # 매핑된 상품번호 = 다잇쏘 주문건
         daitsso_df = df[df["쇼핑몰상품코드"].isin(mapping_dict.keys())].copy()
