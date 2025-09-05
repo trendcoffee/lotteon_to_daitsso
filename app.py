@@ -133,19 +133,9 @@ def convert_to_eplex(order_df: pd.DataFrame):
 
         code = erp
         if 수집처 == "롯데ON":
-            # 쇼핑몰상품Key 컬럼 가져오기
-            쇼핑몰상품Key = str(row.get("쇼핑몰상품Key", "") or "").strip()
-            
-            # 롯데ON 모음딜 처리: 쇼핑몰상품Key가 LO1506416845로 시작하는 경우
-            if 쇼핑몰상품Key.startswith("LO1506416845"):
-                # 모음딜: 시럽이름 추출하여 lotteon_map에서 찾기
-                시럽이름 = 쇼핑몰상품Key.replace("LO1506416845", "").replace(" ", "")  # 띄어쓰기 제거
-                if 시럽이름 in lotteon_map:
-                    code = lotteon_map[시럽이름]  # 시럽 특별 코드 사용
-                else:
-                    code = "LO1506416845_1"  # 기본 시럽 코드
-            elif 쇼핑몰상품코드:
-                code = 쇼핑몰상품코드  # 일반 상품코드 사용
+            # 전처리에서 이미 쇼핑몰상품코드가 시럽 코드로 변환되었으므로 그대로 사용
+            if 쇼핑몰상품코드:
+                code = 쇼핑몰상품코드
 
         rows.append({
             "* F/C": "NS001",
@@ -218,26 +208,25 @@ if ecount_file:
         
         # 매핑 처리 (안전하게)
         if "쇼핑몰상품코드" in df.columns:
-            # 다잇쏘 주문건: 쇼핑몰상품코드가 Google Sheets 매핑에 있는 경우
-            daitsso_df = df[df["쇼핑몰상품코드"].isin(mapping_dict.keys())].copy()
-            
-            # 이플렉스 주문건: 쇼핑몰상품코드가 Google Sheets 매핑에 없는 경우
-            other_df = df[~df["쇼핑몰상품코드"].isin(mapping_dict.keys())].copy()
-            
-            # 롯데ON 모음딜 중에서 시럽 코드가 Google Sheets 매핑에 있는 경우도 다잇쏘로 이동
+            # 1단계: 모음딜 전처리 - 쇼핑몰상품코드를 시럽 코드로 변환
+            df_processed = df.copy()
             if "쇼핑몰상품Key" in df.columns:
-                for _, row in other_df.iterrows():
+                for idx, row in df_processed.iterrows():
                     쇼핑몰상품Key = str(row.get("쇼핑몰상품Key", "") or "").strip()
                     if 쇼핑몰상품Key.startswith("LO1506416845"):
-                        # 시럽이름 추출
+                        # 시럽이름 추출하여 시럽 코드로 변환
                         시럽이름 = 쇼핑몰상품Key.replace("LO1506416845", "").replace(" ", "")
                         if 시럽이름 in lotteon_map:
                             시럽코드 = lotteon_map[시럽이름]
-                            # 시럽 코드가 Google Sheets 매핑에 있으면 다잇쏘로 이동
-                            if 시럽코드 in mapping_dict.keys():
-                                # 이플렉스에서 제거하고 다잇쏘에 추가
-                                other_df = other_df.drop(row.name)
-                                daitsso_df = pd.concat([daitsso_df, row.to_frame().T], ignore_index=True)
+                            # 쇼핑몰상품코드를 시럽 코드로 변경
+                            df_processed.at[idx, "쇼핑몰상품코드"] = 시럽코드
+            
+            # 2단계: 변환된 코드로 분류
+            # 다잇쏘 주문건: 쇼핑몰상품코드가 Google Sheets 매핑에 있는 경우
+            daitsso_df = df_processed[df_processed["쇼핑몰상품코드"].isin(mapping_dict.keys())].copy()
+            
+            # 이플렉스 주문건: 쇼핑몰상품코드가 Google Sheets 매핑에 없는 경우
+            other_df = df_processed[~df_processed["쇼핑몰상품코드"].isin(mapping_dict.keys())].copy()
         else:
             st.error("❌ '쇼핑몰상품코드' 컬럼을 찾을 수 없습니다.")
             st.stop()
