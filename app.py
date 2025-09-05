@@ -103,11 +103,11 @@ st.markdown("---")
 
 # 매핑 불러오기
 mapping_dict = load_mapping()
-st.write("📋 불러온 매핑 현황 (최신 6개):")
+st.subheader("📋 매핑 현황")
 if mapping_dict:
     st.dataframe(
-        pd.DataFrame(list(mapping_dict.items()), columns=["상품번호", "상품명"]).tail(6),
-        height=200
+        pd.DataFrame(list(mapping_dict.items()), columns=["상품번호", "상품명"]),
+        height=250,  # 스크롤 가능한 높이
     )
 else:
     st.warning("⚠️ 매핑 데이터를 불러오지 못했습니다.")
@@ -139,7 +139,8 @@ with st.form("add_mapping_form"):
                 st.exception(e)
 
 # ------------------ 6. 파일 업로드 ------------------
-uploaded = st.file_uploader("📂 롯데ON 주문건 Excel 업로드 (.xlsx)", type=["xlsx"])
+st.subheader("📂 롯데ON 주문건 업로드")
+uploaded = st.file_uploader("Excel 업로드 (.xlsx)", type=["xlsx"])
 if uploaded:
     try:
         df = pd.read_excel(uploaded, dtype=str)
