@@ -220,7 +220,8 @@ if ecount_file:
         st.error(f"오류 내용: {str(e)}")
         st.stop()
 
-    if st.button("변환 실행"):
+    # 파일 업로드 시 자동 변환 실행
+    if ecount_file:
         # 빈 DataFrame 체크
         if other_df.empty:
             st.warning("⚠️ 이플렉스로 변환할 주문건이 없습니다.")
@@ -284,7 +285,7 @@ if ecount_file:
 st.markdown("---")
 st.subheader("📋 매핑 현황")
 if mapping_dict:
-    st.dataframe(pd.DataFrame(list(mapping_dict.items()), columns=["상품번호", "상품명"]), use_container_width=True, height=400)
+    st.dataframe(pd.DataFrame(list(mapping_dict.items()), columns=["상품번호", "상품명"]), use_container_width=True, height=200)
 
 # ================== 매핑 추가 입력창 ==================
 st.markdown("---")
