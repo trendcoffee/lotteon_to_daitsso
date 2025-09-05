@@ -39,9 +39,6 @@ def load_mapping():
         return {}, None
 
 mapping_dict, worksheet = load_mapping()
-st.subheader("📋 매핑 현황 (상위 10개)")
-if mapping_dict:
-    st.dataframe(pd.DataFrame(list(mapping_dict.items()), columns=["상품번호", "상품명"]).head(10))
 
 # ================== 롯데ON 모음딜 하드코딩 ==================
 lotteon_map = {
@@ -261,6 +258,12 @@ if ecount_file:
             if not eplex_df.empty:
                 st.subheader("📋 이플렉스 주문건 미리보기")
                 st.dataframe(eplex_df.head(10), use_container_width=True, height=250)
+
+# ================== 매핑 현황 ==================
+st.markdown("---")
+st.subheader("📋 매핑 현황")
+if mapping_dict:
+    st.dataframe(pd.DataFrame(list(mapping_dict.items()), columns=["상품번호", "상품명"]), use_container_width=True, height=400)
 
 # ================== 매핑 추가 입력창 ==================
 st.markdown("---")
