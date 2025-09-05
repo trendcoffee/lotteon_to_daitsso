@@ -18,7 +18,7 @@ def get_gspread_client():
     )
     return gspread.authorize(creds)
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=60)  # TTL을 10분에서 1분으로 단축
 def load_mapping():
     try:
         gc = get_gspread_client()
@@ -315,6 +315,14 @@ if ecount_file:
 # ================== 매핑 현황 ==================
 st.markdown("---")
 st.subheader("📋 매핑 현황")
+
+# 매핑 현황 새로고침 버튼
+col1, col2 = st.columns([3, 1])
+with col2:
+    if st.button("🔄 새로고침", help="Google Sheets의 최신 데이터로 업데이트"):
+        load_mapping.clear()
+        st.rerun()
+
 # 매핑 현황 실시간 로드
 current_mapping_dict, _ = load_mapping()
 if current_mapping_dict:
