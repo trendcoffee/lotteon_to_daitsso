@@ -210,16 +210,43 @@ if ecount_file:
         if "쇼핑몰상품코드" in df.columns:
             # 1단계: 모음딜 전처리 - 쇼핑몰상품코드를 시럽 코드로 변환
             df_processed = df.copy()
-            if "쇼핑몰상품Key" in df.columns:
+            
+            # 디버깅: 컬럼명 확인
+            st.write("🔍 **디버깅 정보**")
+            st.write(f"📋 사용 가능한 컬럼들: {list(df.columns)}")
+            
+            # 쇼핑몰품목key 컬럼 찾기 (대소문자 구분 없이)
+            product_key_col = None
+            for col in df.columns:
+                if "쇼핑몰품목" in col and "key" in col.lower():
+                    product_key_col = col
+                    break
+            
+            st.write(f"🔑 쇼핑몰품목key 컬럼: {product_key_col}")
+            
+            if product_key_col:
+                모음딜_처리_개수 = 0
                 for idx, row in df_processed.iterrows():
-                    쇼핑몰상품Key = str(row.get("쇼핑몰상품Key", "") or "").strip()
+                    쇼핑몰상품Key = str(row.get(product_key_col, "") or "").strip()
                     if 쇼핑몰상품Key.startswith("LO1506416845"):
+                        모음딜_처리_개수 += 1
                         # 시럽이름 추출하여 시럽 코드로 변환
                         시럽이름 = 쇼핑몰상품Key.replace("LO1506416845", "").replace(" ", "")
-                        if 시럽이름 in lotteon_map:
+                        st.write(f"🍯 모음딜 발견: {쇼핑몰상품Key} → 시럽이름: '{시럽이름}'")
+                        
+                        if 시럽이름 and 시럽이름 in lotteon_map:
                             시럽코드 = lotteon_map[시럽이름]
                             # 쇼핑몰상품코드를 시럽 코드로 변경
                             df_processed.at[idx, "쇼핑몰상품코드"] = 시럽코드
+                            st.write(f"✅ 변환 완료: {row['쇼핑몰상품코드']} → {시럽코드}")
+                        elif 시럽이름:
+                            # 시럽이름이 있지만 lotteon_map에 없는 경우 기본 시럽 코드 사용
+                            df_processed.at[idx, "쇼핑몰상품코드"] = "LO1506416845_1"
+                            st.write(f"⚠️ 기본 코드 사용: {row['쇼핑몰상품코드']} → LO1506416845_1")
+                
+                st.write(f"📊 총 모음딜 처리 개수: {모음딜_처리_개수}")
+            else:
+                st.warning("⚠️ 쇼핑몰품목key 컬럼을 찾을 수 없습니다.")
             
             # 2단계: 변환된 코드로 분류
             # 다잇쏘 주문건: 쇼핑몰상품코드가 Google Sheets 매핑에 있는 경우
@@ -227,6 +254,19 @@ if ecount_file:
             
             # 이플렉스 주문건: 쇼핑몰상품코드가 Google Sheets 매핑에 없는 경우
             other_df = df_processed[~df_processed["쇼핑몰상품코드"].isin(mapping_dict.keys())].copy()
+            
+            # 디버깅: 분류 결과 확인
+            st.write(f"📊 **분류 결과**")
+            st.write(f"🔵 다잇쏘 주문건: {len(daitsso_df)}개")
+            st.write(f"🟡 이플렉스 주문건: {len(other_df)}개")
+            
+            if len(daitsso_df) > 0:
+                st.write("🔵 **다잇쏘 주문건 쇼핑몰상품코드들:**")
+                st.write(daitsso_df["쇼핑몰상품코드"].unique())
+            
+            if len(other_df) > 0:
+                st.write("🟡 **이플렉스 주문건 쇼핑몰상품코드들:**")
+                st.write(other_df["쇼핑몰상품코드"].unique())
         else:
             st.error("❌ '쇼핑몰상품코드' 컬럼을 찾을 수 없습니다.")
             st.stop()
