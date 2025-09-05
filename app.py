@@ -351,6 +351,9 @@ with st.form("add_mapping"):
                 # 매핑 현황 캐시 클리어하여 실시간 업데이트
                 load_mapping.clear()
                 
+                # 페이지 새로고침하여 매핑 현황 즉시 반영
+                st.rerun()
+                
             except Exception as e:
                 st.error("❌ 매핑 추가 중 오류 발생")
                 st.error(f"오류 내용: {str(e)}")
