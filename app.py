@@ -88,7 +88,7 @@ lotteon_map = {
 
 # ================== 유틸리티 함수 ==================
 def _safe_postal_code(postal_code):
-    """우편번호를 안전하게 처리하는 함수"""
+    """우편번호를 안전하게 처리하는 함수 (5자리 고정)"""
     try:
         if not postal_code or str(postal_code).strip() == "":
             return "00000"
@@ -106,15 +106,21 @@ def _safe_postal_code(postal_code):
         if not numbers:
             return "00000"
         
-        # 5자리로 맞추기
-        result = ''.join(numbers)[:5].zfill(5)
-        return result if len(result) == 5 else "00000"
+        # 숫자를 합쳐서 5자리로 맞추기 (앞에 0 채우기)
+        result = ''.join(numbers)
+        if len(result) == 0:
+            return "00000"
+        elif len(result) >= 5:
+            return result[:5]  # 5자리 이상이면 앞 5자리만
+        else:
+            return result.zfill(5)  # 5자리 미만이면 앞에 0 채우기
         
     except Exception:
         return "00000"
 
 # ================== 변환 함수 ==================
 def convert_to_eplex(order_df: pd.DataFrame):
+    # 주문일자를 2025-09-25 형식으로 설정
     today = datetime.today().strftime("%Y-%m-%d")
     rows = []
 
@@ -151,7 +157,7 @@ def convert_to_eplex(order_df: pd.DataFrame):
             "* 받는사람 우편번호": _safe_postal_code(row.get("우편번호", "")),
             "* 받는사람 주소": str(row.get("주소", "") or ""),
             "배송메세지": str(row.get("배송요청사항", "") or ""),
-            "* 주문일자": today,
+            "* 주문일자": today,  # 2025-09-25 형식
             "상품주문번호": "",
             "주문번호(참조)": "",
             "주문중개채널(상세)": "",
@@ -288,7 +294,7 @@ with st.form("add_mapping"):
                 
                 # 캐시 갱신 (쿠팡 코드와 동일)
                 load_mapping.clear()
-                st.rerun()
+                # st.rerun() 제거 - 다운로드 버튼이 사라지는 문제 해결
                 
             except Exception as e:
                 st.error("❌ 매핑 추가 중 오류 발생")
