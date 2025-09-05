@@ -38,7 +38,7 @@ def load_mapping():
         st.exception(e)
         return {}, None
 
-mapping_dict, worksheet = load_mapping()
+# 매핑 현황은 동적으로 로드 (매핑 추가 후 실시간 업데이트를 위해)
 
 # ================== 롯데ON 모음딜 하드코딩 ==================
 lotteon_map = {
@@ -174,6 +174,9 @@ def convert_to_eplex(order_df: pd.DataFrame):
 
 # ================== UI ==================
 st.title("롯데ON 주문건 변환기")
+# 매핑 현황 동적 로드
+mapping_dict, worksheet = load_mapping()
+
 ecount_file = st.file_uploader("① 이카운트 양식 업로드", type=["xlsx"])
 
 if ecount_file:
@@ -312,8 +315,10 @@ if ecount_file:
 # ================== 매핑 현황 ==================
 st.markdown("---")
 st.subheader("📋 매핑 현황")
-if mapping_dict:
-    st.dataframe(pd.DataFrame(list(mapping_dict.items()), columns=["상품번호", "상품명"]), use_container_width=True, height=200)
+# 매핑 현황 실시간 로드
+current_mapping_dict, _ = load_mapping()
+if current_mapping_dict:
+    st.dataframe(pd.DataFrame(list(current_mapping_dict.items()), columns=["상품번호", "상품명"]), use_container_width=True, height=200)
 
 # ================== 매핑 추가 입력창 ==================
 st.markdown("---")
@@ -343,7 +348,8 @@ with st.form("add_mapping"):
                 ws.append_row([new_number.strip(), new_name.strip()])
                 st.success(f"✅ 매핑 추가됨: {new_number.strip()} - {new_name.strip()}")
                 
-                # 캐시 갱신 제거 - 다운로드 버튼이 사라지는 문제 해결
+                # 매핑 현황 캐시 클리어하여 실시간 업데이트
+                load_mapping.clear()
                 
             except Exception as e:
                 st.error("❌ 매핑 추가 중 오류 발생")
