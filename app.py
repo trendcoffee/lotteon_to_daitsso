@@ -21,22 +21,17 @@ def get_gspread_client():
 
 @st.cache_data(ttl=600)
 def load_mapping():
-    try:
-        gc = get_gspread_client()
-        sheet_id = st.secrets["GSHEETS_ID"]
-        worksheet_name = st.secrets.get("GSHEETS_WORKSHEET", "Sheet1")
+    gc = get_gspread_client()
+    sheet_id = st.secrets["GSHEETS_ID"]
+    worksheet_name = st.secrets.get("GSHEETS_WORKSHEET", "Sheet1")
 
-        sh = gc.open_by_key(sheet_id)
-        ws = sh.worksheet(worksheet_name)
+    sh = gc.open_by_key(sheet_id)
+    ws = sh.worksheet(worksheet_name)
 
-        records = ws.get_all_records()
-        mapping = {str(r.get("상품번호", "")).strip(): str(r.get("상품명", "")).strip()
-                   for r in records if r.get("상품번호")}
-        return mapping, ws
-    except Exception as e:
-        st.error("❌ 구글 시트 로드 실패")
-        st.exception(e)
-        return {}, None
+    records = ws.get_all_records()
+    mapping = {str(r.get("상품번호", "")).strip(): str(r.get("상품명", "")).strip()
+               for r in records if r.get("상품번호")}
+    return mapping, ws
 
 # ------------------ 2. 변환 함수 ------------------
 def build_eplex_orders(df: pd.DataFrame, mapping_dict: dict) -> (pd.DataFrame, pd.DataFrame):
@@ -106,7 +101,10 @@ st.markdown("---")
 
 # 매핑 불러오기
 mapping_dict, worksheet = load_mapping()
-st.write("📋 불러온 매핑 데이터 (앞 6개)", pd.DataFrame(list(mapping_dict.items()), columns=["상품번호", "상품명"]).head(6))
+mapping_df = pd.DataFrame(list(mapping_dict.items()), columns=["상품번호", "상품명"])
+
+st.subheader("📋 현재 매핑 현황")
+st.dataframe(mapping_df, use_container_width=True, height=200)
 
 # 파일 업로드
 uploaded = st.file_uploader("📂 롯데ON 주문건 Excel 업로드 (.xlsx)", type=["xlsx"])
@@ -156,7 +154,8 @@ with st.form("add_mapping_form"):
             try:
                 worksheet.append_row([new_number.strip(), new_name.strip()])
                 st.success(f"✅ '{new_number}' 이(가) 시트에 추가되었습니다.")
-                st.cache_data.clear()
+                st.cache_data.clear()  # 캐시된 매핑 즉시 무효화
+                st.rerun()  # 👉 UI 즉시 갱신
             except Exception as e:
                 st.error("❌ 매핑 추가 중 오류 발생")
                 st.exception(e)
