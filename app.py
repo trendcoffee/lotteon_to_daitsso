@@ -279,14 +279,21 @@ with st.form("add_mapping"):
             st.warning("⚠️ 이미 존재하는 상품번호입니다.")
         else:
             try:
-                if worksheet is None:
-                    st.error("❌ 구글 시트 연결이 끊어졌습니다. 페이지를 새로고침해주세요.")
-                else:
-                    worksheet.append_rows([[new_number.strip(), new_name.strip()]], value_input_option="USER_ENTERED")
-                    st.success(f"✅ 매핑 추가됨: {new_number.strip()} - {new_name.strip()}")
-                    # 캐시 무효화하여 새로고침
-                    st.cache_data.clear()
-                    st.rerun()
+                # 쿠팡 코드 방식: 매핑 추가할 때마다 새로운 클라이언트 생성
+                gc = get_gspread_client()
+                sheet_id = st.secrets["GSHEETS_ID"]
+                ws_name = st.secrets.get("GSHEETS_WORKSHEET", "Sheet1")
+                sh = gc.open_by_key(sheet_id)
+                ws = sh.worksheet(ws_name)
+                
+                # append_row 사용 (쿠팡 코드와 동일)
+                ws.append_row([new_number.strip(), new_name.strip()])
+                st.success(f"✅ 매핑 추가됨: {new_number.strip()} - {new_name.strip()}")
+                
+                # 캐시 갱신 (쿠팡 코드와 동일)
+                load_mapping.clear()
+                st.rerun()
+                
             except Exception as e:
                 st.error("❌ 매핑 추가 중 오류 발생")
                 st.error(f"오류 내용: {str(e)}")
